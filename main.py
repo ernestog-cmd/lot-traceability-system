@@ -1,12 +1,7 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from models import Lot
 
 app = FastAPI()
-
-class Lot(BaseModel):
-    id: str
-    status: str
-    temperature: float
 
 lots: list[Lot] = []
 
@@ -17,7 +12,6 @@ def read_root():
 @app.get("/lots")
 def get_lots():
     return lots
-
 
 @app.post("/lots")
 def create_lot(lot: Lot):
