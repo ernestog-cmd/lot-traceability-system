@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from models import Lot, Auditor
 from database import engine, Base, get_db
+from datetime import datetime
 import db_models
 
 Base.metadata.create_all(bind=engine)
@@ -65,3 +66,23 @@ def get_lot(lot_id: str, db: Session = Depends(get_db)):
     if lot is None:
         raise HTTPException(status_code=404, detail=f"Lot {lot_id} not found")
     return lot_db_to_response(lot)
+
+@app.patch("/lots/{lot_id}/audit")
+def audit_lot(lot_id: str, auditor: Auditor, db: Session = Depends(get_db)):
+    lot = db.query(db_models.LotDB).filter(db_models.LotDB.id == lot_id).first()
+    if lot is None:
+        raise HTTPException(status_code=404, detail=f"Lot {lot_id} not found")
+
+    if lot.status != "ready_for_audit":
+        raise HTTPException(status_code=409, detail=f"Lot {lot_id} cannot be audited: current status is '{lot.status}'")
+
+    lot.status = "in_audit_process"
+    lot.audited_by_first_name = auditor.first_name
+    lot.audited_by_last_name = auditor.last_name
+    lot.audited_by_system_user = auditor.system_user
+    lot.audited_at = datetime.now()
+
+    db.commit()
+    db.refresh(lot)
+    return lot_db_to_response(lot)
+
