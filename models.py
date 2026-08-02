@@ -24,4 +24,17 @@ class Lot(BaseModel):
     audited_by: Auditor | None = None
     audited_at: datetime | None = None
 
+
+class LotResponse(BaseModel):
+    id: str
+    part_number: str
+    description: str
+    product_family: str
+    units: int
+    manufacturing_date: date
+    status: LotStatus
+    audited_by: Auditor | None = None
+    audited_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
     

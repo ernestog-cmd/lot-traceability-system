@@ -57,3 +57,11 @@ def create_lot(lot: Lot, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_lot)
     return lot_db_to_response(new_lot)
+
+
+@app.get("/lots/{lot_id}")
+def get_lot(lot_id: str, db: Session = Depends(get_db)):
+    lot = db.query(db_models.LotDB).filter(db_models.LotDB.id == lot_id).first()
+    if lot is None:
+        raise HTTPException(status_code=404, detail=f"Lot {lot_id} not found")
+    return lot_db_to_response(lot)
