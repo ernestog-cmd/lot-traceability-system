@@ -8,6 +8,11 @@ class LotStatus(str, Enum):
     RELEASED = "released"
     HOLD = "hold"
 
+
+class AuditDecision(str, Enum):
+    ACCEPT = "accept"
+    REJECT = "reject"
+
 class Auditor(BaseModel):
     first_name: str
     last_name: str
@@ -37,4 +42,4 @@ class LotResponse(BaseModel):
     audited_at: datetime | None = None
 
     model_config = {"from_attributes": True}
-    
+

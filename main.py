@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Lot, Auditor
+from models import Lot, Auditor, LotStatus
 from database import engine, Base, get_db
 from datetime import datetime
 import db_models
@@ -86,3 +86,21 @@ def audit_lot(lot_id: str, auditor: Auditor, db: Session = Depends(get_db)):
     db.refresh(lot)
     return lot_db_to_response(lot)
 
+
+@app.patch("/lot/{lot_id}/disposition")
+def dispose_lot(lot_id: str, decision: LotStatus, db: Session = Depends(get_db)):
+    lot = db.query(db_models.LotDB).filter(db_models.LotDB.id == lot_id).first()
+
+    if lot is None:
+        raise HTTPException(status_code=404, detail=f"Lot {lot_id} not found")
+
+    if lot.status != "in_audit_process":
+        raise HTTPException(status_code=409, detail=f"Lot {lot_id} cannot be dispositioned: current status is {lot.status}")
+
+    if decision not in (LotStatus.RELEASED, LotStatus.HOLD):
+        raise HTTPException(status_code=422, detail=f"Disposition must be 'released' or 'hold'")
+
+    lot.status = decision.value
+    db.commit()
+    db.refresh(lot)
+    return lot_db_to_response(lot)
