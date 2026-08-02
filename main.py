@@ -87,7 +87,7 @@ def audit_lot(lot_id: str, auditor: Auditor, db: Session = Depends(get_db)):
     return lot_db_to_response(lot)
 
 
-@app.patch("/lot/{lot_id}/disposition")
+@app.patch("/lots/{lot_id}/disposition")
 def dispose_lot(lot_id: str, decision: LotStatus, db: Session = Depends(get_db)):
     lot = db.query(db_models.LotDB).filter(db_models.LotDB.id == lot_id).first()
 
