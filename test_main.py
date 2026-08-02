@@ -84,3 +84,47 @@ def test_full_lifecycle():
     disp_response = client.patch("/lots/LIFE001/disposition?decision=released")
     assert disp_response.status_code == 200
     assert disp_response.json()["status"] == "released"
+
+
+def test_audit_nonexistent_lot():
+    auditor = {
+        "first_name": "Daisy",
+        "last_name": "Roberts",
+        "system_user": "DRoberts"
+    }
+    response = client.patch("/lots/DOESNOTEXIST/audit", json=auditor)
+    assert response.status_code == 404
+
+
+def test_audit_lot_twice_fails():
+    new_lot = {
+        "id": "DUPLICATED001",
+        "part_number": "PN-300",
+        "description": "Test needle",
+        "product_family": "needles",
+        "units": 200, 
+        "manufacturing_date": "2026-07-01",
+        "status": "ready_for_audit" 
+    }
+    client.post("/lots", json=new_lot)
+    auditor = {"first_name": "Amy", "last_name": "Cooper", "system_user": "ACooper"}
+
+    first = client.patch("/lots/DUPLICATED001/audit", json=auditor)
+    assert first.status_code == 200
+
+    second = client.patch("/lots/DUPLICATED001/audit", json=auditor)
+    assert second.status_code == 409
+
+def test_dispose_without_audit_fails():
+    new_lot = {
+        "id": "NOAUDIT001",
+        "part_number": "PN-400",
+        "description": "Test container",
+        "product_family": "containers",
+        "units": 300,
+        "manufacturing_date": "2026-07-18",
+        "status": "ready_for_audit"
+    }
+    client.post("/lots", json=new_lot)
+    response = client.patch("/lots/NOAUDIT001/disposition?decision=released")
+    assert response.status_code == 409
