@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Lot
+from models import Lot, Auditor
 from database import engine, Base, get_db
 import db_models
 
@@ -8,13 +8,35 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+def lot_db_to_response(lot_db: db_models.LotDB) -> Lot:
+    auditor = None
+    if lot_db.audited_by_system_user:
+        auditor = Auditor(
+            first_name = lot_db.audited_by_first_name,
+            last_name = lot_db.audited_by_last_name,
+            system_user = lot_db.audited_by_system_user,
+        )
+    return Lot(
+        id=lot_db.id,
+        part_number=lot_db.part_number,
+        description=lot_db.description,
+        product_family=lot_db.product_family,
+        units=lot_db.units,
+        manufacturing_date=lot_db.manufacturing_date,
+        status=lot_db.status,
+        audited_by= auditor,
+        audited_at=lot_db.audited_at,
+    )
+
 @app.get("/")
 def read_root():
     return {"message": "Lot Traceability System is running"}
 
 @app.get("/lots")
 def get_lots(db: Session = Depends(get_db)):
-    return db.query(db_models.LotDB).all()
+    lots_db = db.query(db_models.LotDB).all()
+    return [lot_db_to_response(lot) for lot in lots_db]
+
 
 @app.post("/lots") 
 def create_lot(lot: Lot, db: Session = Depends(get_db)):
@@ -34,4 +56,4 @@ def create_lot(lot: Lot, db: Session = Depends(get_db)):
     db.add(new_lot)
     db.commit()
     db.refresh(new_lot)
-    return new_lot
+    return lot_db_to_response(new_lot)
