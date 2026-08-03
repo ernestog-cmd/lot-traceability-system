@@ -8,5 +8,34 @@
 <body>
     <h1>Lot Traceability System</h1>
     <p>Pre-sterilization lot managing</p>
+    <h2>Create Lot</h2>
+    <form id="create-lot-form">
+        <input type="text" id="id" placeholder="Lot ID" required>
+        <input type="text" id="part_number" placeholder="Part Number" required>
+        <input type="text" id="description" placeholder="Description" required>
+        <input type="text" id="product_family" placeholder="Product Family" required>
+        <input type="number" id="units" placeholder="Units" required>
+        <label for="manufacturing_date">Manufacturing Date:</label>
+        <input type="date" id="manufacturing_date" required>
+        <button type="submit">Create Lot</button>
+    </form>
+    <h2>Lots</h2>
+    <table id ="lots_table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Part number</th>
+                <th>Description</th>
+                <th>Family</th>
+                <th>Units</th>
+                <th>Status</th>
+                <th>Audited by</th>
+            </tr>
+        </thead>
+        <tbody id="lots-body">
+        
+        </tbody>
+    </table>
+    <script src="/static/app.js"></script>
 </body>
 </html>
