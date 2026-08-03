@@ -9,10 +9,6 @@ class LotStatus(str, Enum):
     HOLD = "hold"
 
 
-class AuditDecision(str, Enum):
-    ACCEPT = "accept"
-    REJECT = "reject"
-
 class Auditor(BaseModel):
     first_name: str
     last_name: str

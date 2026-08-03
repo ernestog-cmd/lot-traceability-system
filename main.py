@@ -4,6 +4,8 @@ from models import Lot, Auditor, LotStatus
 from database import engine, Base, get_db
 from datetime import datetime
 import db_models
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 Base.metadata.create_all(bind=engine)
 
@@ -31,7 +33,7 @@ def lot_db_to_response(lot_db: db_models.LotDB) -> Lot:
 
 @app.get("/")
 def read_root():
-    return {"message": "Lot Traceability System is running"}
+    return FileResponse("static/index.html")
 
 @app.get("/lots")
 def get_lots(db: Session = Depends(get_db)):
@@ -104,3 +106,6 @@ def dispose_lot(lot_id: str, decision: LotStatus, db: Session = Depends(get_db))
     db.commit()
     db.refresh(lot)
     return lot_db_to_response(lot)
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
