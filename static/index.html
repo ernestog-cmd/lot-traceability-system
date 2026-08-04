@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="eng">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name ="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lot Traceability System</title>
 </head>
 <body>
     <h1>Lot Traceability System</h1>
-    <p>Pre-sterilization lot managing</p>
+    <p>Pre-sterilization lot tracking</p>
+
     <h2>Create Lot</h2>
     <form id="create-lot-form">
         <input type="text" id="id" placeholder="Lot ID" required>
@@ -19,23 +20,34 @@
         <input type="date" id="manufacturing_date" required>
         <button type="submit">Create Lot</button>
     </form>
+    <h2>Audit Lot</h2>
+    <form id="audit-lot-form" style="display:none;">
+        <p>Auditing lot: <span id="audit-lot-id"></span></p>
+        <input type="text" id="auditor_first_name" placeholder="Auditor First Name" required>
+        <input type="text" id="auditor_last_name" placeholder="Auditor Last Name" required>
+        <input type="text" id="auditor_system_user" placeholder="Auditor System User" required>
+        <button type="submit">Confirm Audit</button>
+        <button type="button" onclick="cancelAudit()">Cancel</button>
+    </form>
     <h2>Lots</h2>
-    <table id ="lots_table">
+    <table id="lots-table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Part number</th>
+                <th>Part Number</th>
                 <th>Description</th>
                 <th>Family</th>
                 <th>Units</th>
                 <th>Status</th>
-                <th>Audited by</th>
+                <th>Audited By</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody id="lots-body">
-        
+            <!-- Los lotes se insertarán aquí con JavaScript -->
         </tbody>
     </table>
+
     <script src="/static/app.js"></script>
 </body>
 </html>
