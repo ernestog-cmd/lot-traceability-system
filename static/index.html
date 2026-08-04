@@ -4,33 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lot Traceability System</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <h1>Lot Traceability System</h1>
     <p>Pre-sterilization lot tracking</p>
 
-    <h2>Create Lot</h2>
-    <form id="create-lot-form">
-        <input type="text" id="id" placeholder="Lot ID" required>
-        <input type="text" id="part_number" placeholder="Part Number" required>
-        <input type="text" id="description" placeholder="Description" required>
-        <input type="text" id="product_family" placeholder="Product Family" required>
-        <input type="number" id="units" placeholder="Units" required>
-        <label for="manufacturing_date">Manufacturing Date:</label>
-        <input type="date" id="manufacturing_date" required>
-        <button type="submit">Create Lot</button>
-    </form>
-    <h2>Audit Lot</h2>
-    <form id="audit-lot-form" style="display:none;">
-        <p>Auditing lot: <span id="audit-lot-id"></span></p>
-        <input type="text" id="auditor_first_name" placeholder="Auditor First Name" required>
-        <input type="text" id="auditor_last_name" placeholder="Auditor Last Name" required>
-        <input type="text" id="auditor_system_user" placeholder="Auditor System User" required>
-        <button type="submit">Confirm Audit</button>
-        <button type="button" onclick="cancelAudit()">Cancel</button>
-    </form>
-    <h2>Lots</h2>
-    <table id="lots-table">
+    <div class="toolbar">
+        <button onclick="openCreateModal()">+ Create Lot</button>
+    </div>
+
+    <!-- Modal: Create Lot -->
+    <div id="create-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Create Lot</h2>
+            <form id="create-lot-form">
+                <input type="text" id="id" placeholder="Lot ID" required>
+                <input type="text" id="part_number" placeholder="Part Number" required>
+                <input type="text" id="description" placeholder="Description" required>
+                <input type="text" id="product_family" placeholder="Product Family" required>
+                <input type="number" id="units" placeholder="Units" required>
+                <label for="manufacturing_date">Manufacturing Date:</label>
+                <input type="date" id="manufacturing_date" required>
+                <div class="modal-actions">
+                    <button type="submit">Create Lot</button>
+                    <button type="button" class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Audit Lot -->
+    <div id="audit-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Audit Lot</h2>
+            <p>Auditing lot: <span id="audit-lot-id"></span></p>
+            <form id="audit-lot-form">
+                <input type="text" id="auditor_first_name" placeholder="Auditor First Name" required>
+                <input type="text" id="auditor_last_name" placeholder="Auditor Last Name" required>
+                <input type="text" id="auditor_system_user" placeholder="Auditor System User" required>
+                <div class="modal-actions">
+                    <button type="submit">Confirm Audit</button>
+                    <button type="button" class="btn-cancel" onclick="cancelAudit()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h2>Active Lots</h2>
+    <table id="active-table">
         <thead>
             <tr>
                 <th>ID</th>
@@ -43,14 +65,29 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="lots-body">
-            <!-- Los lotes se insertarán aquí con JavaScript -->
-        </tbody>
+        <tbody id="active-body"></tbody>
     </table>
-    <div id="disposition-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
-        <div style="background:white; width:600px; margin:80px auto; padding:20px;">
-            <h2>Lot Disposition</h2>
 
+    <h2>History</h2>
+    <table id="history-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Part Number</th>
+                <th>Description</th>
+                <th>Family</th>
+                <th>Units</th>
+                <th>Status</th>
+                <th>Audited By</th>
+            </tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+    </table>
+    <div id="show-more-container" style="margin-top:12px;"></div>
+    <!-- Modal: Disposition -->
+    <div id="disposition-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Lot Disposition</h2>
             <div style="display:flex; gap:40px;">
                 <div>
                     <h3>Lot Data</h3>
@@ -74,13 +111,14 @@
             <label><input type="checkbox"> Work order audited</label><br>
             <label><input type="checkbox"> Correct WIP location</label><br>
 
-            <div style="margin-top:20px;">
-                <button onclick="submitDisposition('released')">Release</button>
-                <button onclick="submitDisposition('hold')">Hold</button>
-                <button onclick="closeDisposition()">Cancel</button>
+            <div class="modal-actions">
+                <button class="btn-release" onclick="submitDisposition('released')">Release</button>
+                <button class="btn-hold" onclick="submitDisposition('hold')">Hold</button>
+                <button class="btn-cancel" onclick="closeDisposition()">Cancel</button>
             </div>
         </div>
     </div>
+
     <script src="/static/app.js"></script>
 </body>
 </html>

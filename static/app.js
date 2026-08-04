@@ -1,15 +1,39 @@
 let currentLots = [];
+let historyExpanded = false;
 
 async function loadLots() {
     const response = await fetch("/lots");
     const lots = await response.json();
     currentLots = lots;
 
-    const tableBody = document.getElementById("lots-body");
-    tableBody.innerHTML = "";
+    const activeBody = document.getElementById("active-body");
+    const historyBody = document.getElementById("history-body");
+    activeBody.innerHTML = "";
+    historyBody.innerHTML = "";
+
+    // Separar lotes activos e históricos
+    const activeLots = [];
+    const historyLots = [];
 
     for (const lot of lots) {
+        if (lot.status === "ready_for_audit" || lot.status === "in_audit_process") {
+            activeLots.push(lot);
+        } else {
+            historyLots.push(lot);
+        }
+    }
+
+    // Ordenar historial: más recientes primero (por fecha de auditoría)
+    historyLots.sort((a, b) => {
+        const dateA = a.audited_at || "";
+        const dateB = b.audited_at || "";
+        return dateB.localeCompare(dateA);
+    });
+
+    // Render activos
+    for (const lot of activeLots) {
         const auditor = lot.audited_by ? lot.audited_by.system_user : "-";
+        const statusCell = `<span class="status status-${lot.status}">${lot.status}</span>`;
 
         let actions = "";
         if (lot.status === "ready_for_audit") {
@@ -18,20 +42,66 @@ async function loadLots() {
             actions = `<button onclick="openDisposition('${lot.id}')">Dispose</button>`;
         }
 
-        const row = `
+        activeBody.innerHTML += `
             <tr>
                 <td>${lot.id}</td>
                 <td>${lot.part_number}</td>
                 <td>${lot.description}</td>
                 <td>${lot.product_family}</td>
                 <td>${lot.units}</td>
-                <td>${lot.status}</td>
+                <td>${statusCell}</td>
                 <td>${auditor}</td>
                 <td>${actions}</td>
             </tr>
         `;
-        tableBody.innerHTML += row;
     }
+
+    // Render historial (con límite de 7 si no está expandido)
+    const limit = 7;
+    const lotsToShow = historyExpanded ? historyLots : historyLots.slice(0, limit);
+
+    for (const lot of lotsToShow) {
+        const auditor = lot.audited_by ? lot.audited_by.system_user : "-";
+        const statusCell = `<span class="status status-${lot.status}">${lot.status}</span>`;
+
+        historyBody.innerHTML += `
+            <tr>
+                <td>${lot.id}</td>
+                <td>${lot.part_number}</td>
+                <td>${lot.description}</td>
+                <td>${lot.product_family}</td>
+                <td>${lot.units}</td>
+                <td>${statusCell}</td>
+                <td>${auditor}</td>
+            </tr>
+        `;
+    }
+
+    // Botón "show more" si hay más de 7
+    const showMoreContainer = document.getElementById("show-more-container");
+    if (historyLots.length > limit) {
+        const remaining = historyLots.length - limit;
+        showMoreContainer.innerHTML = historyExpanded
+            ? `<button class="btn-cancel" onclick="toggleHistory()">Show less</button>`
+            : `<button class="btn-cancel" onclick="toggleHistory()">+ Show ${remaining} more</button>`;
+    } else {
+        showMoreContainer.innerHTML = "";
+    }
+}
+
+function toggleHistory() {
+    historyExpanded = !historyExpanded;
+    loadLots();
+}
+
+/* ---- Create Lot modal ---- */
+function openCreateModal() {
+    document.getElementById("create-modal").style.display = "block";
+}
+
+function closeCreateModal() {
+    document.getElementById("create-modal").style.display = "none";
+    document.getElementById("create-lot-form").reset();
 }
 
 const form = document.getElementById("create-lot-form");
@@ -57,7 +127,7 @@ form.addEventListener("submit", async function (event) {
 
     if (response.ok) {
         const createdLot = await response.json();
-        form.reset();
+        closeCreateModal();
         loadLots();
         alert(`Lot ${createdLot.id} created successfully`);
     } else {
@@ -65,14 +135,15 @@ form.addEventListener("submit", async function (event) {
     }
 });
 
+/* ---- Audit modal ---- */
 function auditLot(lotId) {
     document.getElementById("audit-lot-id").textContent = lotId;
-    document.getElementById("audit-lot-form").style.display = "block";
     document.getElementById("audit-lot-form").dataset.lotId = lotId;
+    document.getElementById("audit-modal").style.display = "block";
 }
 
 function cancelAudit() {
-    document.getElementById("audit-lot-form").style.display = "none";
+    document.getElementById("audit-modal").style.display = "none";
     document.getElementById("audit-lot-form").reset();
 }
 
@@ -94,15 +165,15 @@ auditForm.addEventListener("submit", async function (event) {
     });
 
     if (response.ok) {
-        auditForm.style.display = "none";
-        auditForm.reset();
+        cancelAudit();
         loadLots();
-        alert(`Lot ${lotId} assigned successfully`);
+        alert(`Lot ${lotId} assigned correctly. Audit process has started`);
     } else {
         alert("Error auditing lot");
     }
 });
 
+/* ---- Disposition modal ---- */
 let dispositionLotId = null;
 
 function openDisposition(lotId) {
