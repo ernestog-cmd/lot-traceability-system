@@ -166,4 +166,3 @@ Refinements planned to support a richer domain and enable the timeline features 
 
 **Gerardo Gutiérrez**
 [LinkedIn](https://www.linkedin.com/in/gerardo-gutierrez91) · [GitHub](https://github.com/ernestog-cmd)
-</file_text>
