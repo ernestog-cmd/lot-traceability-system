@@ -1,6 +1,9 @@
+let currentLots = [];
+
 async function loadLots() {
     const response = await fetch("/lots");
     const lots = await response.json();
+    currentLots = lots;
 
     const tableBody = document.getElementById("lots-body");
     tableBody.innerHTML = "";
@@ -11,6 +14,8 @@ async function loadLots() {
         let actions = "";
         if (lot.status === "ready_for_audit") {
             actions = `<button onclick="auditLot('${lot.id}')">Audit</button>`;
+        } else if (lot.status === "in_audit_process") {
+            actions = `<button onclick="openDisposition('${lot.id}')">Dispose</button>`;
         }
 
         const row = `
@@ -92,10 +97,56 @@ auditForm.addEventListener("submit", async function (event) {
         auditForm.style.display = "none";
         auditForm.reset();
         loadLots();
-        alert(`Lot ${lotId} audited successfully`);
+        alert(`Lot ${lotId} assigned successfully`);
     } else {
         alert("Error auditing lot");
     }
 });
+
+let dispositionLotId = null;
+
+function openDisposition(lotId) {
+    const lot = currentLots.find(l => l.id === lotId);
+    if (!lot) return;
+
+    dispositionLotId = lotId;
+
+    document.getElementById("disp-lot-id").textContent = lot.id;
+    document.getElementById("disp-part-number").textContent = lot.part_number;
+    document.getElementById("disp-description").textContent = lot.description;
+    document.getElementById("disp-family").textContent = lot.product_family;
+    document.getElementById("disp-units").textContent = lot.units;
+
+    if (lot.audited_by) {
+        document.getElementById("disp-auditor-name").textContent =
+            lot.audited_by.first_name + " " + lot.audited_by.last_name;
+        document.getElementById("disp-auditor-user").textContent = lot.audited_by.system_user;
+    }
+    document.getElementById("disp-audited-at").textContent = lot.audited_at || "-";
+
+    document.getElementById("disposition-modal").style.display = "block";
+}
+
+function closeDisposition() {
+    document.getElementById("disposition-modal").style.display = "none";
+    dispositionLotId = null;
+}
+
+async function submitDisposition(decision) {
+    const lotId = dispositionLotId;
+
+    const response = await fetch(`/lots/${lotId}/disposition?decision=${decision}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" }
+    });
+
+    if (response.ok) {
+        closeDisposition();
+        loadLots();
+        alert(`Lot ${lotId} dispositioned as ${decision}`);
+    } else {
+        alert("Error dispositioning lot");
+    }
+}
 
 loadLots();
