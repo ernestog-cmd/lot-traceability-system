@@ -5,7 +5,7 @@ from app.database import engine, Base
 from app.routers import part_numbers, lots
 
 
-Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="Lot Traceability System",
     description=("Tracks manufacturing lots through the pre-sterilization lifecycle in an FDA/ISO-regulated medical device environment."),
