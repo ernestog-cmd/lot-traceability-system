@@ -45,5 +45,6 @@ class LotResponse(BaseModel):
     manufacturing_date: date
     status: LotStatus
     audited_by: Auditor | None = None
-    audited_at: Auditor | None = None
-    model_config = {"from_attributes": True}
+    audited_at: datetime | None = None
+
+    model_config = {"from_attributes": False}
