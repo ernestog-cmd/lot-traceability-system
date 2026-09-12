@@ -21,3 +21,14 @@ class LotDB(Base):
     audited_at = Column(DateTime, nullable=True)
 
     __table_args__ = (UniqueConstraint("lot_id", "part_number_code", name="uq_lot_part_number"),)
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+    username = Column(String, primary_key=True, index=True)
+    hashed_password = Column(String, nullable=False)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    role = Column(String, nullable=False)
+
+    

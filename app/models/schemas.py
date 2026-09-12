@@ -48,3 +48,18 @@ class LotResponse(BaseModel):
     audited_at: datetime | None = None
 
     model_config = {"from_attributes": False}
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    first_name: str
+    last_name: str
+    role: str
+
+class UserResponse(BaseModel):
+    username: str
+    first_name: str
+    last_name: str
+    role: str
+
+    model_config = {"from_attributes": True}
