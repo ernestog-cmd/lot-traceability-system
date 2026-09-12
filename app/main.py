@@ -1,8 +1,10 @@
+import logging
+logging.basicConfig(level=logging.DEBUG)
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from app.routers import part_numbers, lots, users
+from app.routers import part_numbers, lots, users, product_families
 from app.auth import router as auth_router
 
 app = FastAPI(
@@ -16,6 +18,7 @@ app = FastAPI(
 
 app.include_router(auth_router.router)
 app.include_router(users.router)
+app.include_router(product_families.router)
 app.include_router(part_numbers.router)
 app.include_router(lots.router)
 
