@@ -14,28 +14,36 @@ class Auditor(BaseModel):
     last_name: str
     system_user: str
 
-class Lot(BaseModel):
-    id: str
-    part_number: str
+
+
+class PartNumberCreate(BaseModel):
+    code: str
     description: str
+
+class PartNumberResponse(BaseModel):
+    code: str
+    description: str
+
+    model_config = {"from_attributes": True}
+
+
+class LotCreate(BaseModel):
+    lot_id: str
+    part_number_code: str
     product_family: str
     units: int
     manufacturing_date: date
     status: LotStatus = LotStatus.READY_FOR_AUDIT
-    audited_by: Auditor | None = None
-    audited_at: datetime | None = None
-
 
 class LotResponse(BaseModel):
-    id: str
-    part_number: str
-    description: str
+    batch_id: int
+    lot_id: str
+    part_number_code: str
+    part_number_description: str | None = None
     product_family: str
     units: int
     manufacturing_date: date
     status: LotStatus
     audited_by: Auditor | None = None
-    audited_at: datetime | None = None
-
+    audited_at: Auditor | None = None
     model_config = {"from_attributes": True}
-
