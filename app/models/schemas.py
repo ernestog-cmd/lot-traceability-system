@@ -38,8 +38,13 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     role: str
+    is_active: str = "true"
 
     model_config = {"from_attributes": True}
+
+
+class UserRoleUpdate(BaseModel):
+    role: str
 
 
 # --- ProductFamily schemas ---

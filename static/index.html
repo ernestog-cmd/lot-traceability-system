@@ -7,12 +7,87 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Lot Traceability System</h1>
-    <p>Pre-sterilization lot tracking</p>
 
-    <div class="toolbar">
-        <button onclick="openCreateModal()">+ Create Lot</button>
-        <button onclick="openPartNumberModal()">+ Add Part Number</button>
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h1>Lot Traceability System</h1>
+            <p>Pre-sterilization lot tracking</p>
+            <form id="login-form">
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <button type="submit" class="btn-primary">Sign In</button>
+                <p id="login-error" class="error-msg" style="display:none;">Invalid username or password</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" style="display:none;">
+        <div class="app-header">
+            <div>
+                <h1>Lot Traceability System</h1>
+                <p>Pre-sterilization lot tracking</p>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <span id="user-role-badge"></span>
+                </div>
+                <button class="btn-signout" onclick="logout()">Sign Out</button>
+            </div>
+        </div>
+
+        <div class="toolbar" id="toolbar"></div>
+
+        <h2>Active Lots</h2>
+        <table id="active-table">
+            <thead>
+                <tr>
+                    <th>Lot ID</th>
+                    <th>Part Number</th>
+                    <th>Description</th>
+                    <th>Family</th>
+                    <th>Units</th>
+                    <th>Status</th>
+                    <th>Audited By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="active-body"></tbody>
+        </table>
+
+        <h2>History</h2>
+        <table id="history-table">
+            <thead>
+                <tr>
+                    <th>Lot ID</th>
+                    <th>Part Number</th>
+                    <th>Description</th>
+                    <th>Family</th>
+                    <th>Units</th>
+                    <th>Status</th>
+                    <th>Audited By</th>
+                    <th>NCR</th>
+                </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+        </table>
+        <div id="show-more-container" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Modal: Add Product Family -->
+    <div id="family-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Add Product Family</h2>
+            <form id="family-form">
+                <input type="text" id="family-name" placeholder="Family name (e.g. cannula)" required>
+                <div class="modal-actions">
+                    <button type="submit">Propose</button>
+                    <button type="button" class="btn-cancel" onclick="closeFamilyModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal: Add Part Number -->
@@ -22,8 +97,11 @@
             <form id="part-number-form">
                 <input type="text" id="pn-code" placeholder="Part Number Code (e.g. PN-100)" required>
                 <input type="text" id="pn-description" placeholder="Description" required>
+                <select id="pn-family" required>
+                    <option value="">-- Select Family --</option>
+                </select>
                 <div class="modal-actions">
-                    <button type="submit">Add</button>
+                    <button type="submit">Propose</button>
                     <button type="button" class="btn-cancel" onclick="closePartNumberModal()">Cancel</button>
                 </div>
             </form>
@@ -39,7 +117,6 @@
                 <select id="part_number_code" required>
                     <option value="">-- Select Part Number --</option>
                 </select>
-                <input type="text" id="product_family" placeholder="Product Family" required>
                 <input type="number" id="units" placeholder="Units" required>
                 <label for="manufacturing_date">Manufacturing Date:</label>
                 <input type="date" id="manufacturing_date" required>
@@ -55,11 +132,10 @@
     <div id="audit-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Audit Lot</h2>
-            <p>Auditing lot: <span id="audit-lot-id"></span></p>
+            <p>Enter your auditor credentials to take this lot into audit process.</p>
             <form id="audit-lot-form">
-                <input type="text" id="auditor_first_name" placeholder="Auditor First Name" required>
-                <input type="text" id="auditor_last_name" placeholder="Auditor Last Name" required>
-                <input type="text" id="auditor_system_user" placeholder="Auditor System User" required>
+                <input type="text" id="audit-username" placeholder="Username" required>
+                <input type="password" id="audit-password" placeholder="Password" required>
                 <div class="modal-actions">
                     <button type="submit">Confirm Audit</button>
                     <button type="button" class="btn-cancel" onclick="cancelAudit()">Cancel</button>
@@ -68,45 +144,11 @@
         </div>
     </div>
 
-    <h2>Active Lots</h2>
-    <table id="active-table">
-        <thead>
-            <tr>
-                <th>Lot ID</th>
-                <th>Part Number</th>
-                <th>Description</th>
-                <th>Family</th>
-                <th>Units</th>
-                <th>Status</th>
-                <th>Audited By</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="active-body"></tbody>
-    </table>
-
-    <h2>History</h2>
-    <table id="history-table">
-        <thead>
-            <tr>
-                <th>Lot ID</th>
-                <th>Part Number</th>
-                <th>Description</th>
-                <th>Family</th>
-                <th>Units</th>
-                <th>Status</th>
-                <th>Audited By</th>
-            </tr>
-        </thead>
-        <tbody id="history-body"></tbody>
-    </table>
-    <div id="show-more-container" style="margin-top:12px;"></div>
-
     <!-- Modal: Disposition -->
     <div id="disposition-modal" class="modal" style="display:none;">
-        <div class="modal-content">
+        <div class="modal-content modal-wide">
             <h2>Lot Disposition</h2>
-            <div style="display:flex; gap:40px;">
+            <div class="disp-grid">
                 <div>
                     <h3>Lot Data</h3>
                     <p>Lot ID: <span id="disp-lot-id"></span></p>
@@ -129,10 +171,79 @@
             <label><input type="checkbox"> Work order audited</label><br>
             <label><input type="checkbox"> Correct WIP location</label><br>
 
+            <div id="ncr-section" style="display:none; margin-top:16px;">
+                <label for="ncr-number">NCR Number (required for Hold):</label>
+                <input type="text" id="ncr-number" placeholder="NCR-XXXX">
+            </div>
+
             <div class="modal-actions">
                 <button class="btn-release" onclick="submitDisposition('released')">Release</button>
-                <button class="btn-hold" onclick="submitDisposition('hold')">Hold</button>
+                <button class="btn-hold" onclick="showNcrField()">Hold</button>
+                <button id="confirm-hold-btn" class="btn-hold" style="display:none;" onclick="submitDisposition('hold')">Confirm Hold</button>
                 <button class="btn-cancel" onclick="closeDisposition()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Return from Hold -->
+    <div id="return-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Return Lot from Hold</h2>
+            <p id="return-lot-info"></p>
+            <p id="return-pending-info" class="pending-info"></p>
+            <form id="return-form">
+                <input type="text" id="return-username" placeholder="Username" required>
+                <input type="password" id="return-password" placeholder="Password" required>
+                <div class="modal-actions">
+                    <button type="submit">Sign</button>
+                    <button type="button" class="btn-cancel" onclick="closeReturnModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Pending Approvals -->
+    <div id="approve-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Pending Approvals</h2>
+            <div id="approve-list"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeApproveModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Create User -->
+    <div id="user-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Create User</h2>
+            <form id="user-form">
+                <input type="text" id="user-username" placeholder="Username" required>
+                <input type="password" id="user-password" placeholder="Password" required>
+                <input type="text" id="user-firstname" placeholder="First Name" required>
+                <input type="text" id="user-lastname" placeholder="Last Name" required>
+                <select id="user-role" required>
+                    <option value="">-- Select Role --</option>
+                    <option value="admin">Admin</option>
+                    <option value="manufacturing">Manufacturing</option>
+                    <option value="engineer">Engineer</option>
+                    <option value="auditor">Auditor</option>
+                </select>
+                <div class="modal-actions">
+                    <button type="submit">Create</button>
+                    <button type="button" class="btn-cancel" onclick="closeUserModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Manage Users -->
+    <div id="manage-users-modal" class="modal" style="display:none;">
+        <div class="modal-content modal-wide" style="max-height:80vh; overflow-y:auto;">
+            <h2>Manage Users</h2>
+            <div id="manage-users-list"></div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeManageUsersModal()">Close</button>
             </div>
         </div>
     </div>

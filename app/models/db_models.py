@@ -53,3 +53,4 @@ class UserDB(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     role = Column(String, nullable=False)
+    is_active = Column(String, nullable=False, default="true")
