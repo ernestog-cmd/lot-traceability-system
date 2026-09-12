@@ -12,6 +12,22 @@
 
     <div class="toolbar">
         <button onclick="openCreateModal()">+ Create Lot</button>
+        <button onclick="openPartNumberModal()">+ Add Part Number</button>
+    </div>
+
+    <!-- Modal: Add Part Number -->
+    <div id="part-number-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Add Part Number</h2>
+            <form id="part-number-form">
+                <input type="text" id="pn-code" placeholder="Part Number Code (e.g. PN-100)" required>
+                <input type="text" id="pn-description" placeholder="Description" required>
+                <div class="modal-actions">
+                    <button type="submit">Add</button>
+                    <button type="button" class="btn-cancel" onclick="closePartNumberModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal: Create Lot -->
@@ -19,9 +35,10 @@
         <div class="modal-content">
             <h2>Create Lot</h2>
             <form id="create-lot-form">
-                <input type="text" id="id" placeholder="Lot ID" required>
-                <input type="text" id="part_number" placeholder="Part Number" required>
-                <input type="text" id="description" placeholder="Description" required>
+                <input type="text" id="lot_id" placeholder="Lot ID" required>
+                <select id="part_number_code" required>
+                    <option value="">-- Select Part Number --</option>
+                </select>
                 <input type="text" id="product_family" placeholder="Product Family" required>
                 <input type="number" id="units" placeholder="Units" required>
                 <label for="manufacturing_date">Manufacturing Date:</label>
@@ -55,7 +72,7 @@
     <table id="active-table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>Lot ID</th>
                 <th>Part Number</th>
                 <th>Description</th>
                 <th>Family</th>
@@ -72,7 +89,7 @@
     <table id="history-table">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>Lot ID</th>
                 <th>Part Number</th>
                 <th>Description</th>
                 <th>Family</th>
@@ -84,6 +101,7 @@
         <tbody id="history-body"></tbody>
     </table>
     <div id="show-more-container" style="margin-top:12px;"></div>
+
     <!-- Modal: Disposition -->
     <div id="disposition-modal" class="modal" style="display:none;">
         <div class="modal-content">
@@ -91,7 +109,7 @@
             <div style="display:flex; gap:40px;">
                 <div>
                     <h3>Lot Data</h3>
-                    <p>ID: <span id="disp-lot-id"></span></p>
+                    <p>Lot ID: <span id="disp-lot-id"></span></p>
                     <p>Part Number: <span id="disp-part-number"></span></p>
                     <p>Description: <span id="disp-description"></span></p>
                     <p>Family: <span id="disp-family"></span></p>

@@ -2,7 +2,7 @@ let currentLots = [];
 let historyExpanded = false;
 
 async function loadLots() {
-    const response = await fetch("/lots");
+    const response = await fetch("/lots/");
     const lots = await response.json();
     currentLots = lots;
 
@@ -11,7 +11,6 @@ async function loadLots() {
     activeBody.innerHTML = "";
     historyBody.innerHTML = "";
 
-    // Separar lotes activos e históricos
     const activeLots = [];
     const historyLots = [];
 
@@ -23,30 +22,28 @@ async function loadLots() {
         }
     }
 
-    // Ordenar historial: más recientes primero (por fecha de auditoría)
     historyLots.sort((a, b) => {
         const dateA = a.audited_at || "";
         const dateB = b.audited_at || "";
         return dateB.localeCompare(dateA);
     });
 
-    // Render activos
     for (const lot of activeLots) {
         const auditor = lot.audited_by ? lot.audited_by.system_user : "-";
         const statusCell = `<span class="status status-${lot.status}">${lot.status}</span>`;
 
         let actions = "";
         if (lot.status === "ready_for_audit") {
-            actions = `<button onclick="auditLot('${lot.id}')">Audit</button>`;
+            actions = `<button onclick="openAuditModal(${lot.batch_id})">Audit</button>`;
         } else if (lot.status === "in_audit_process") {
-            actions = `<button onclick="openDisposition('${lot.id}')">Dispose</button>`;
+            actions = `<button onclick="openDisposition(${lot.batch_id})">Dispose</button>`;
         }
 
         activeBody.innerHTML += `
             <tr>
-                <td>${lot.id}</td>
-                <td>${lot.part_number}</td>
-                <td>${lot.description}</td>
+                <td>${lot.lot_id}</td>
+                <td>${lot.part_number_code}</td>
+                <td>${lot.part_number_description || "-"}</td>
                 <td>${lot.product_family}</td>
                 <td>${lot.units}</td>
                 <td>${statusCell}</td>
@@ -56,7 +53,6 @@ async function loadLots() {
         `;
     }
 
-    // Render historial (con límite de 7 si no está expandido)
     const limit = 7;
     const lotsToShow = historyExpanded ? historyLots : historyLots.slice(0, limit);
 
@@ -66,9 +62,9 @@ async function loadLots() {
 
         historyBody.innerHTML += `
             <tr>
-                <td>${lot.id}</td>
-                <td>${lot.part_number}</td>
-                <td>${lot.description}</td>
+                <td>${lot.lot_id}</td>
+                <td>${lot.part_number_code}</td>
+                <td>${lot.part_number_description || "-"}</td>
                 <td>${lot.product_family}</td>
                 <td>${lot.units}</td>
                 <td>${statusCell}</td>
@@ -77,7 +73,6 @@ async function loadLots() {
         `;
     }
 
-    // Botón "show more" si hay más de 7
     const showMoreContainer = document.getElementById("show-more-container");
     if (historyLots.length > limit) {
         const remaining = historyLots.length - limit;
@@ -94,8 +89,51 @@ function toggleHistory() {
     loadLots();
 }
 
+/* ---- Part Number modal ---- */
+function openPartNumberModal() {
+    document.getElementById("part-number-modal").style.display = "block";
+}
+
+function closePartNumberModal() {
+    document.getElementById("part-number-modal").style.display = "none";
+    document.getElementById("part-number-form").reset();
+}
+
+const partNumberForm = document.getElementById("part-number-form");
+partNumberForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const data = {
+        code: document.getElementById("pn-code").value,
+        description: document.getElementById("pn-description").value
+    };
+
+    const response = await fetch("/part-numbers/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    if (response.ok) {
+        closePartNumberModal();
+        alert(`Part number ${data.code} added successfully`);
+    } else {
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
+    }
+});
+
 /* ---- Create Lot modal ---- */
-function openCreateModal() {
+async function openCreateModal() {
+    const response = await fetch("/part-numbers/");
+    const partNumbers = await response.json();
+
+    const select = document.getElementById("part_number_code");
+    select.innerHTML = `<option value="">-- Select Part Number --</option>`;
+    for (const pn of partNumbers) {
+        select.innerHTML += `<option value="${pn.code}">${pn.code} — ${pn.description}</option>`;
+    }
+
     document.getElementById("create-modal").style.display = "block";
 }
 
@@ -105,21 +143,19 @@ function closeCreateModal() {
 }
 
 const form = document.getElementById("create-lot-form");
-
 form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const newLot = {
-        id: document.getElementById("id").value,
-        part_number: document.getElementById("part_number").value,
-        description: document.getElementById("description").value,
+        lot_id: document.getElementById("lot_id").value,
+        part_number_code: document.getElementById("part_number_code").value,
         product_family: document.getElementById("product_family").value,
         units: parseInt(document.getElementById("units").value),
         manufacturing_date: document.getElementById("manufacturing_date").value,
         status: "ready_for_audit"
     };
 
-    const response = await fetch("/lots", {
+    const response = await fetch("/lots/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLot)
@@ -129,16 +165,17 @@ form.addEventListener("submit", async function (event) {
         const createdLot = await response.json();
         closeCreateModal();
         loadLots();
-        alert(`Lot ${createdLot.id} created successfully`);
+        alert(`Lot ${createdLot.lot_id} created successfully`);
     } else {
-        alert("Error creating lot");
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
     }
 });
 
 /* ---- Audit modal ---- */
-function auditLot(lotId) {
-    document.getElementById("audit-lot-id").textContent = lotId;
-    document.getElementById("audit-lot-form").dataset.lotId = lotId;
+function openAuditModal(batchId) {
+    document.getElementById("audit-lot-id").textContent = batchId;
+    document.getElementById("audit-lot-form").dataset.batchId = batchId;
     document.getElementById("audit-modal").style.display = "block";
 }
 
@@ -150,7 +187,7 @@ function cancelAudit() {
 const auditForm = document.getElementById("audit-lot-form");
 auditForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-    const lotId = auditForm.dataset.lotId;
+    const batchId = auditForm.dataset.batchId;
 
     const auditor = {
         first_name: document.getElementById("auditor_first_name").value,
@@ -158,7 +195,7 @@ auditForm.addEventListener("submit", async function (event) {
         system_user: document.getElementById("auditor_system_user").value
     };
 
-    const response = await fetch(`/lots/${lotId}/audit`, {
+    const response = await fetch(`/lots/${batchId}/audit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(auditor)
@@ -167,24 +204,25 @@ auditForm.addEventListener("submit", async function (event) {
     if (response.ok) {
         cancelAudit();
         loadLots();
-        alert(`Lot ${lotId} assigned correctly. Audit process has started`);
+        alert(`Lot assigned correctly. Audit process has started`);
     } else {
-        alert("Error auditing lot");
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
     }
 });
 
 /* ---- Disposition modal ---- */
-let dispositionLotId = null;
+let dispositionBatchId = null;
 
-function openDisposition(lotId) {
-    const lot = currentLots.find(l => l.id === lotId);
+function openDisposition(batchId) {
+    const lot = currentLots.find(l => l.batch_id === batchId);
     if (!lot) return;
 
-    dispositionLotId = lotId;
+    dispositionBatchId = batchId;
 
-    document.getElementById("disp-lot-id").textContent = lot.id;
-    document.getElementById("disp-part-number").textContent = lot.part_number;
-    document.getElementById("disp-description").textContent = lot.description;
+    document.getElementById("disp-lot-id").textContent = lot.lot_id;
+    document.getElementById("disp-part-number").textContent = lot.part_number_code;
+    document.getElementById("disp-description").textContent = lot.part_number_description || "-";
     document.getElementById("disp-family").textContent = lot.product_family;
     document.getElementById("disp-units").textContent = lot.units;
 
@@ -200,13 +238,11 @@ function openDisposition(lotId) {
 
 function closeDisposition() {
     document.getElementById("disposition-modal").style.display = "none";
-    dispositionLotId = null;
+    dispositionBatchId = null;
 }
 
 async function submitDisposition(decision) {
-    const lotId = dispositionLotId;
-
-    const response = await fetch(`/lots/${lotId}/disposition?decision=${decision}`, {
+    const response = await fetch(`/lots/${dispositionBatchId}/disposition?decision=${decision}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" }
     });
@@ -214,9 +250,10 @@ async function submitDisposition(decision) {
     if (response.ok) {
         closeDisposition();
         loadLots();
-        alert(`Lot ${lotId} dispositioned as ${decision}`);
+        alert(`Lot dispositioned as ${decision}`);
     } else {
-        alert("Error dispositioning lot");
+        const error = await response.json();
+        alert(`Error: ${error.detail}`);
     }
 }
 
