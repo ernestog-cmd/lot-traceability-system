@@ -11,12 +11,23 @@
     <!-- Login Screen -->
     <div id="login-screen">
         <div class="login-card">
-            <h1>Lot Traceability System</h1>
-            <p>Pre-sterilization lot tracking</p>
+            <div class="login-logo">
+                <div class="logo-icon">LTS</div>
+                <div>
+                    <h1>Lot Traceability System</h1>
+                    <p>Pre-sterilization lot tracking</p>
+                </div>
+            </div>
             <form id="login-form">
-                <input type="text" id="login-username" placeholder="Username" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button type="submit" class="btn-primary">Sign In</button>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="login-username" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn-primary btn-full">Sign In</button>
                 <p id="login-error" class="error-msg" style="display:none;">Invalid username or password</p>
             </form>
         </div>
@@ -24,158 +35,448 @@
 
     <!-- Main App -->
     <div id="main-app" style="display:none;">
-        <div class="app-header">
-            <div>
-                <h1>Lot Traceability System</h1>
-                <p>Pre-sterilization lot tracking</p>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon-sm">LTS</div>
+                <span>Lot Traceability</span>
             </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span id="user-name"></span>
-                    <span id="user-role-badge"></span>
+            <nav class="sidebar-nav" id="sidebar-nav"></nav>
+            <div class="sidebar-bottom">
+                <a class="nav-item" onclick="showPage('settings')" data-page="settings">
+                    <span class="nav-icon">⚙</span>
+                    <span>Settings</span>
+                </a>
+                <div class="sidebar-user">
+                    <div class="avatar" id="sidebar-avatar"></div>
+                    <div class="sidebar-user-info">
+                        <span id="sidebar-name"></span>
+                        <span id="sidebar-role"></span>
+                    </div>
                 </div>
-                <button class="btn-signout" onclick="logout()">Sign Out</button>
+                <button class="btn-logout-sidebar" onclick="logout()">Sign Out</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Top bar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h2 id="page-title">Dashboard</h2>
+                    <p id="page-subtitle"></p>
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-user">
+                        <div class="avatar-sm" id="topbar-avatar"></div>
+                        <div>
+                            <span id="topbar-name"></span>
+                            <span id="topbar-role-badge"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pages -->
+            <div id="page-dashboard" class="page active">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon icon-blue">◈</div>
+                        <div class="metric-info">
+                            <span class="metric-label">Total Lots</span>
+                            <span class="metric-value" id="m-total">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon icon-gray">◷</div>
+                        <div class="metric-info">
+                            <span class="metric-label">Ready for Audit</span>
+                            <span class="metric-value" id="m-ready">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon icon-yellow">⊙</div>
+                        <div class="metric-info">
+                            <span class="metric-label">In Audit Process</span>
+                            <span class="metric-value" id="m-audit">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon icon-green">✓</div>
+                        <div class="metric-info">
+                            <span class="metric-label">Released</span>
+                            <span class="metric-value" id="m-released">0</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon icon-red">⊘</div>
+                        <div class="metric-info">
+                            <span class="metric-label">On Hold</span>
+                            <span class="metric-value" id="m-hold">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header"><h3>Recent Activity</h3></div>
+                        <div id="recent-activity"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>Pending Actions</h3></div>
+                        <div id="pending-actions"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-active-lots" class="page">
+                <div class="page-toolbar">
+                    <div class="filters">
+                        <input type="text" id="search-active" placeholder="Search by lot ID, part number, description..." class="search-input" oninput="filterActiveLots()">
+                        <select id="filter-family" onchange="filterActiveLots()">
+                            <option value="">All Families</option>
+                        </select>
+                        <select id="filter-status" onchange="filterActiveLots()">
+                            <option value="">All Statuses</option>
+                            <option value="ready_for_audit">Ready for Audit</option>
+                            <option value="in_audit_process">In Audit Process</option>
+                            <option value="waiting_me_approval">Waiting ME</option>
+                            <option value="waiting_qe_approval">Waiting QE</option>
+                            <option value="hold">On Hold</option>
+                        </select>
+                    </div>
+                    <div id="add-lot-btn-container"></div>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lot ID</th><th>Part Number</th><th>Description</th>
+                                <th>Family</th><th>Units</th><th>Status</th>
+                                <th>Audited By</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="active-lots-body"></tbody>
+                    </table>
+                    <div class="pagination" id="active-pagination"></div>
+                </div>
+            </div>
+
+            <div id="page-history" class="page">
+                <div class="page-toolbar">
+                    <div class="filters">
+                        <input type="text" id="search-history" placeholder="Search by lot ID, part number..." class="search-input" oninput="filterHistory()">
+                        <select id="filter-history-status" onchange="filterHistory()">
+                            <option value="">All Statuses</option>
+                            <option value="released">Released</option>
+                            <option value="hold">On Hold</option>
+                        </select>
+                        <input type="date" id="filter-date-from" onchange="filterHistory()">
+                        <input type="date" id="filter-date-to" onchange="filterHistory()">
+                    </div>
+                    <div class="export-btns">
+                        <button onclick="exportHistory('csv')" class="btn-export">Export CSV</button>
+                        <button onclick="exportHistory('pdf')" class="btn-export">Export PDF</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lot ID</th><th>Part Number</th><th>Description</th>
+                                <th>Family</th><th>Units</th><th>Status</th>
+                                <th>Audited By</th><th>Audit Date</th><th>NCR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body"></tbody>
+                    </table>
+                    <div class="pagination" id="history-pagination"></div>
+                </div>
+            </div>
+
+            <div id="page-audits" class="page">
+                <div class="card">
+                    <div class="card-header"><h3>Audits by Inspector</h3></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Inspector</th><th>Lot ID</th><th>Part Number</th>
+                                <th>Description</th><th>Audit Date</th><th>Disposition</th><th>NCR</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audits-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="page-reports" class="page">
+                <div class="reports-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Daily Report — <span id="report-date"></span></h3>
+                            <div class="export-btns">
+                                <button onclick="exportReport('daily','csv')" class="btn-export">CSV</button>
+                                <button onclick="exportReport('daily','pdf')" class="btn-export">PDF</button>
+                            </div>
+                        </div>
+                        <div class="report-metrics">
+                            <div class="report-metric">
+                                <span class="report-metric-label">Inspected Today</span>
+                                <span class="report-metric-value" id="r-inspected">0</span>
+                            </div>
+                            <div class="report-metric">
+                                <span class="report-metric-label">Released</span>
+                                <span class="report-metric-value green" id="r-released">0</span>
+                            </div>
+                            <div class="report-metric">
+                                <span class="report-metric-label">On Hold</span>
+                                <span class="report-metric-value red" id="r-hold">0</span>
+                            </div>
+                            <div class="report-metric">
+                                <span class="report-metric-label">Pending</span>
+                                <span class="report-metric-value yellow" id="r-pending">0</span>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Lot ID</th><th>Part Number</th><th>Status</th>
+                                    <th>Audited By</th><th>NCR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-report-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Historical by Part Number</h3>
+                            <div class="export-btns">
+                                <button onclick="exportReport('pn','csv')" class="btn-export">CSV</button>
+                                <button onclick="exportReport('pn','pdf')" class="btn-export">PDF</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Part Number</th><th>Description</th><th>Family</th>
+                                    <th>Total Lots</th><th>Released</th><th>On Hold</th><th>Pending</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pn-report-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-admin" class="page">
+                <div class="page-toolbar">
+                    <div></div>
+                    <button onclick="openUserModal()">+ Create User</button>
+                </div>
+                <div class="card">
+                    <div id="manage-users-list"></div>
+                </div>
+            </div>
+
+            <div id="page-settings" class="page">
+                <div class="card settings-card">
+                    <h3>Appearance</h3>
+                    <div class="setting-row">
+                        <div>
+                            <span class="setting-label">Theme</span>
+                            <span class="setting-desc">Switch between dark and light mode</span>
+                        </div>
+                        <button onclick="toggleTheme()" id="theme-toggle-btn">Switch to Light</button>
+                    </div>
+                </div>
+                <div class="card settings-card" style="margin-top:16px;">
+                    <h3>Account</h3>
+                    <div class="setting-row">
+                        <div>
+                            <span class="setting-label" id="settings-name"></span>
+                            <span class="setting-desc" id="settings-role"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Lot Detail Panel -->
+        <div id="lot-detail-overlay" class="detail-overlay" style="display:none;" onclick="closeLotDetail()"></div>
+        <div id="lot-detail-panel" class="detail-panel">
+            <div class="detail-header">
+                <div>
+                    <h2 id="detail-lot-id"></h2>
+                    <span id="detail-status-badge" class="status"></span>
+                </div>
+                <button class="btn-icon" onclick="closeLotDetail()">✕</button>
+            </div>
+            <div class="detail-body">
+                <div class="detail-section">
+                    <h4>Lot Information</h4>
+                    <div class="detail-grid">
+                        <span class="detail-label">Part Number</span><span id="d-pn"></span>
+                        <span class="detail-label">Description</span><span id="d-desc"></span>
+                        <span class="detail-label">Product Family</span><span id="d-family"></span>
+                        <span class="detail-label">Units</span><span id="d-units"></span>
+                        <span class="detail-label">Mfg. Date</span><span id="d-mfg-date"></span>
+                        <span class="detail-label">Status</span><span id="d-status"></span>
+                    </div>
+                </div>
+                <div class="detail-section" id="d-audit-section">
+                    <h4>Audit Information</h4>
+                    <div class="detail-grid">
+                        <span class="detail-label">Audited By</span><span id="d-auditor"></span>
+                        <span class="detail-label">Auditor Name</span><span id="d-auditor-name"></span>
+                        <span class="detail-label">Audit Date</span><span id="d-audit-date"></span>
+                        <span class="detail-label">NCR</span><span id="d-ncr"></span>
+                    </div>
+                </div>
+                <div class="detail-section" id="d-hold-section" style="display:none;">
+                    <h4>Hold Information</h4>
+                    <div class="detail-grid">
+                        <span class="detail-label">ME Signed</span><span id="d-me-sign"></span>
+                        <span class="detail-label">QE Signed</span><span id="d-qe-sign"></span>
+                    </div>
+                </div>
+                <div class="detail-actions" id="d-actions"></div>
             </div>
         </div>
 
-        <div class="toolbar" id="toolbar"></div>
-
-        <h2>Active Lots</h2>
-        <table id="active-table">
-            <thead>
-                <tr>
-                    <th>Lot ID</th>
-                    <th>Part Number</th>
-                    <th>Description</th>
-                    <th>Family</th>
-                    <th>Units</th>
-                    <th>Status</th>
-                    <th>Audited By</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="active-body"></tbody>
-        </table>
-
-        <h2>History</h2>
-        <table id="history-table">
-            <thead>
-                <tr>
-                    <th>Lot ID</th>
-                    <th>Part Number</th>
-                    <th>Description</th>
-                    <th>Family</th>
-                    <th>Units</th>
-                    <th>Status</th>
-                    <th>Audited By</th>
-                    <th>NCR</th>
-                </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-        </table>
-        <div id="show-more-container" style="margin-top:12px;"></div>
     </div>
 
-    <!-- Modal: Add Product Family -->
+    <!-- Modals -->
     <div id="family-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Add Product Family</h2>
             <form id="family-form">
-                <input type="text" id="family-name" placeholder="Family name (e.g. cannula)" required>
+                <div class="form-group">
+                    <label>Family Name</label>
+                    <input type="text" id="family-name" placeholder="e.g. cannula" required>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Propose</button>
+                    <button type="submit" class="btn-primary">Propose</button>
                     <button type="button" class="btn-cancel" onclick="closeFamilyModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Add Part Number -->
     <div id="part-number-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Add Part Number</h2>
             <form id="part-number-form">
-                <input type="text" id="pn-code" placeholder="Part Number Code (e.g. PN-100)" required>
-                <input type="text" id="pn-description" placeholder="Description" required>
-                <select id="pn-family" required>
-                    <option value="">-- Select Family --</option>
-                </select>
+                <div class="form-group">
+                    <label>Code</label>
+                    <input type="text" id="pn-code" placeholder="e.g. PN-100" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="pn-description" placeholder="Product description" required>
+                </div>
+                <div class="form-group">
+                    <label>Product Family</label>
+                    <select id="pn-family" required>
+                        <option value="">-- Select Family --</option>
+                    </select>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Propose</button>
+                    <button type="submit" class="btn-primary">Propose</button>
                     <button type="button" class="btn-cancel" onclick="closePartNumberModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Create Lot -->
     <div id="create-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Create Lot</h2>
             <form id="create-lot-form">
-                <input type="text" id="lot_id" placeholder="Lot ID" required>
-                <select id="part_number_code" required>
-                    <option value="">-- Select Part Number --</option>
-                </select>
-                <input type="number" id="units" placeholder="Units" required>
-                <label for="manufacturing_date">Manufacturing Date:</label>
-                <input type="date" id="manufacturing_date" required>
+                <div class="form-group">
+                    <label>Lot ID</label>
+                    <input type="text" id="lot_id" placeholder="Lot identifier" required>
+                </div>
+                <div class="form-group">
+                    <label>Part Number</label>
+                    <select id="part_number_code" required>
+                        <option value="">-- Select Part Number --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Units</label>
+                    <input type="number" id="units" placeholder="Number of units" required>
+                </div>
+                <div class="form-group">
+                    <label>Manufacturing Date</label>
+                    <input type="date" id="manufacturing_date" required>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Create Lot</button>
+                    <button type="submit" class="btn-primary">Create Lot</button>
                     <button type="button" class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Audit Lot -->
     <div id="audit-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h2>Audit Lot</h2>
-            <p>Enter your auditor credentials to take this lot into audit process.</p>
+            <h2>Start Audit</h2>
+            <p class="modal-desc">Enter your auditor credentials to take this lot into audit process.</p>
             <form id="audit-lot-form">
-                <input type="text" id="audit-username" placeholder="Username" required>
-                <input type="password" id="audit-password" placeholder="Password" required>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="audit-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="audit-password" required>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Confirm Audit</button>
+                    <button type="submit" class="btn-primary">Confirm Audit</button>
                     <button type="button" class="btn-cancel" onclick="cancelAudit()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Disposition -->
     <div id="disposition-modal" class="modal" style="display:none;">
         <div class="modal-content modal-wide">
             <h2>Lot Disposition</h2>
             <div class="disp-grid">
                 <div>
-                    <h3>Lot Data</h3>
-                    <p>Lot ID: <span id="disp-lot-id"></span></p>
-                    <p>Part Number: <span id="disp-part-number"></span></p>
-                    <p>Description: <span id="disp-description"></span></p>
-                    <p>Family: <span id="disp-family"></span></p>
-                    <p>Units: <span id="disp-units"></span></p>
+                    <h4>Lot Data</h4>
+                    <div class="detail-grid">
+                        <span class="detail-label">Lot ID</span><span id="disp-lot-id"></span>
+                        <span class="detail-label">Part Number</span><span id="disp-part-number"></span>
+                        <span class="detail-label">Description</span><span id="disp-description"></span>
+                        <span class="detail-label">Family</span><span id="disp-family"></span>
+                        <span class="detail-label">Units</span><span id="disp-units"></span>
+                    </div>
                 </div>
                 <div>
-                    <h3>Auditor</h3>
-                    <p>Name: <span id="disp-auditor-name"></span></p>
-                    <p>System User: <span id="disp-auditor-user"></span></p>
-                    <p>Audited At: <span id="disp-audited-at"></span></p>
+                    <h4>Auditor</h4>
+                    <div class="detail-grid">
+                        <span class="detail-label">Name</span><span id="disp-auditor-name"></span>
+                        <span class="detail-label">System User</span><span id="disp-auditor-user"></span>
+                        <span class="detail-label">Audited At</span><span id="disp-audited-at"></span>
+                    </div>
                 </div>
             </div>
-
-            <h3>Review Criteria</h3>
-            <label><input type="checkbox"> No physical damage</label><br>
-            <label><input type="checkbox"> Quantity matches system</label><br>
-            <label><input type="checkbox"> Work order audited</label><br>
-            <label><input type="checkbox"> Correct WIP location</label><br>
-
-            <div id="ncr-section" style="display:none; margin-top:16px;">
-                <label for="ncr-number">NCR Number (required for Hold):</label>
-                <input type="text" id="ncr-number" placeholder="NCR-XXXX">
+            <h4 style="margin:16px 0 10px;">Review Criteria</h4>
+            <div class="checklist">
+                <label class="check-item"><input type="checkbox"> No physical damage</label>
+                <label class="check-item"><input type="checkbox"> Quantity matches system</label>
+                <label class="check-item"><input type="checkbox"> Work order audited</label>
+                <label class="check-item"><input type="checkbox"> Correct WIP location</label>
             </div>
-
+            <div id="ncr-section" style="display:none; margin-top:16px;">
+                <div class="form-group">
+                    <label>NCR Number (required for Hold)</label>
+                    <input type="text" id="ncr-number" placeholder="NCR-XXXX">
+                </div>
+            </div>
             <div class="modal-actions">
                 <button class="btn-release" onclick="submitDisposition('released')">Release</button>
                 <button class="btn-hold" onclick="showNcrField()">Hold</button>
@@ -185,24 +486,28 @@
         </div>
     </div>
 
-    <!-- Modal: Return from Hold -->
     <div id="return-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Return Lot from Hold</h2>
-            <p id="return-lot-info"></p>
-            <p id="return-pending-info" class="pending-info"></p>
+            <p id="return-lot-info" class="modal-desc"></p>
+            <div id="return-pending-info" class="pending-info"></div>
             <form id="return-form">
-                <input type="text" id="return-username" placeholder="Username" required>
-                <input type="password" id="return-password" placeholder="Password" required>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="return-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="return-password" required>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Sign</button>
+                    <button type="submit" class="btn-primary">Sign</button>
                     <button type="button" class="btn-cancel" onclick="closeReturnModal()">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal: Pending Approvals -->
     <div id="approve-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Pending Approvals</h2>
@@ -213,38 +518,41 @@
         </div>
     </div>
 
-    <!-- Modal: Create User -->
     <div id="user-modal" class="modal" style="display:none;">
         <div class="modal-content">
             <h2>Create User</h2>
             <form id="user-form">
-                <input type="text" id="user-username" placeholder="Username" required>
-                <input type="password" id="user-password" placeholder="Password" required>
-                <input type="text" id="user-firstname" placeholder="First Name" required>
-                <input type="text" id="user-lastname" placeholder="Last Name" required>
-                <select id="user-role" required>
-                    <option value="">-- Select Role --</option>
-                    <option value="admin">Admin</option>
-                    <option value="manufacturing">Manufacturing</option>
-                    <option value="engineer">Engineer</option>
-                    <option value="auditor">Auditor</option>
-                </select>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="user-username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="user-password" required>
+                </div>
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" id="user-firstname" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="user-lastname" required>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="user-role" required>
+                        <option value="">-- Select Role --</option>
+                        <option value="admin">Admin</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="engineer">Engineer</option>
+                        <option value="auditor">Auditor</option>
+                    </select>
+                </div>
                 <div class="modal-actions">
-                    <button type="submit">Create</button>
+                    <button type="submit" class="btn-primary">Create</button>
                     <button type="button" class="btn-cancel" onclick="closeUserModal()">Cancel</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Modal: Manage Users -->
-    <div id="manage-users-modal" class="modal" style="display:none;">
-        <div class="modal-content modal-wide" style="max-height:80vh; overflow-y:auto;">
-            <h2>Manage Users</h2>
-            <div id="manage-users-list"></div>
-            <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeManageUsersModal()">Close</button>
-            </div>
         </div>
     </div>
 
