@@ -1,5 +1,6 @@
 # Lot Traceability System
 
+[![CI](https://github.com/ernestog-cmd/lot-traceability-system/actions/workflows/ci.yml/badge.svg)](https://github.com/ernestog-cmd/lot-traceability-system/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?style=flat&logo=fastapi&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat&logo=postgresql&logoColor=white)
