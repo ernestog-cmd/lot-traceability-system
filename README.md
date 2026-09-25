@@ -12,7 +12,7 @@
 
 A full-stack web application for tracking manufacturing lots through their pre-sterilization lifecycle in an FDA/ISO-regulated medical device manufacturing environment. Built with FastAPI, PostgreSQL, and a vanilla JavaScript frontend with a role-based multi-user interface.
 
-**🔗 Live demo:** [lot-traceability-system.up.railway.app](https://lot-traceability-system.up.railway.app)
+**🔗 Live demo:** [lot-traceability-system.up.railway.app](https://lot-traceability-system-production.up.railway.app)
 
 > The demo runs on a free tier that may sleep after inactivity. The first request may take 30–60 seconds to wake the service.
 
