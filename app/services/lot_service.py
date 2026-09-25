@@ -4,6 +4,9 @@ from fastapi import HTTPException
 from app.models.db_models import LotDB, PartNumber, UserDB
 from app.models.schemas import LotCreate, LotStatus
 from app.auth.security import verify_password
+from app.core.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def _to_response(lot: LotDB, db: Session) -> dict:
@@ -40,6 +43,7 @@ def get_all_lots(db: Session) -> list[dict]:
 def get_lot(batch_id: int, db: Session) -> dict:
     lot = db.query(LotDB).filter_by(batch_id=batch_id).first()
     if not lot:
+        logger.warning(f"Lot lookup failed: batch_id {batch_id} not found")
         raise HTTPException(status_code=404, detail=f"Lot with batch_id {batch_id} not found")
     return _to_response(lot, db)
 
@@ -47,10 +51,12 @@ def get_lot(batch_id: int, db: Session) -> dict:
 def create_lot(data: LotCreate, db: Session, created_by: str) -> dict:
     part_number = db.query(PartNumber).filter_by(code=data.part_number_code, status="active").first()
     if not part_number:
+        logger.warning(f"Lot creation failed: part number '{data.part_number_code}' not found or not active")
         raise HTTPException(status_code=404, detail=f"Part number '{data.part_number_code}' not found or not active")
 
     existing = db.query(LotDB).filter_by(lot_id=data.lot_id, part_number_code=data.part_number_code).first()
     if existing:
+        logger.warning(f"Lot creation failed: duplicate lot_id '{data.lot_id}' + part_number '{data.part_number_code}'")
         raise HTTPException(status_code=409, detail=f"Lot '{data.lot_id}' with part number '{data.part_number_code}' already exists")
 
     lot = LotDB(
@@ -64,20 +70,25 @@ def create_lot(data: LotCreate, db: Session, created_by: str) -> dict:
     db.add(lot)
     db.commit()
     db.refresh(lot)
+    logger.info(f"Lot created: {lot.lot_id} (batch_id={lot.batch_id}) by {created_by}")
     return _to_response(lot, db)
 
 
 def audit_lot(batch_id: int, username: str, password: str, db: Session) -> dict:
     user = db.query(UserDB).filter_by(username=username).first()
     if not user or not verify_password(password, user.hashed_password):
+        logger.warning(f"Failed audit login attempt for username '{username}' on batch_id {batch_id}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if user.role != "auditor":
+        logger.warning(f"Non-auditor '{username}' (role={user.role}) attempted to audit batch_id {batch_id}")
         raise HTTPException(status_code=403, detail="Only auditors can audit lots")
 
     lot = db.query(LotDB).filter_by(batch_id=batch_id).first()
     if not lot:
+        logger.warning(f"Audit failed: batch_id {batch_id} not found")
         raise HTTPException(status_code=404, detail=f"Lot with batch_id {batch_id} not found")
     if lot.status != LotStatus.READY_FOR_AUDIT.value:
+        logger.warning(f"Audit failed: lot {lot.lot_id} status is '{lot.status}', expected ready_for_audit")
         raise HTTPException(status_code=409, detail=f"Lot cannot be audited: current status is '{lot.status}'")
 
     lot.status = LotStatus.IN_AUDIT_PROCESS.value
@@ -87,14 +98,17 @@ def audit_lot(batch_id: int, username: str, password: str, db: Session) -> dict:
     lot.audited_at = datetime.now()
     db.commit()
     db.refresh(lot)
+    logger.info(f"Lot {lot.lot_id} (batch_id={batch_id}) entered audit process by {username}")
     return _to_response(lot, db)
 
 
 def dispose_lot(batch_id: int, decision: LotStatus, ncr_number: str | None, db: Session) -> dict:
     lot = db.query(LotDB).filter_by(batch_id=batch_id).first()
     if not lot:
+        logger.warning(f"Disposition failed: batch_id {batch_id} not found")
         raise HTTPException(status_code=404, detail=f"Lot with batch_id {batch_id} not found")
     if lot.status != LotStatus.IN_AUDIT_PROCESS.value:
+        logger.warning(f"Disposition failed: lot {lot.lot_id} status is '{lot.status}', expected in_audit_process")
         raise HTTPException(status_code=409, detail=f"Lot cannot be dispositioned: current status is '{lot.status}'")
     if decision not in (LotStatus.RELEASED, LotStatus.HOLD):
         raise HTTPException(status_code=422, detail="Disposition must be 'released' or 'hold'")
@@ -106,14 +120,18 @@ def dispose_lot(batch_id: int, decision: LotStatus, ncr_number: str | None, db: 
         lot.ncr_number = ncr_number
     db.commit()
     db.refresh(lot)
+    logger.info(f"Lot {lot.lot_id} (batch_id={batch_id}) dispositioned as '{decision.value}'"
+                + (f" with NCR {ncr_number}" if decision == LotStatus.HOLD else ""))
     return _to_response(lot, db)
 
 
 def sign_return_from_hold(batch_id: int, username: str, password: str, db: Session) -> dict:
     user = db.query(UserDB).filter_by(username=username).first()
     if not user or not verify_password(password, user.hashed_password):
+        logger.warning(f"Failed return-from-hold login attempt for username '{username}' on batch_id {batch_id}")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if user.role not in ("engineer", "manufacturing"):
+        logger.warning(f"Role '{user.role}' user '{username}' attempted to sign return-from-hold on batch_id {batch_id}")
         raise HTTPException(status_code=403, detail="Only engineers and manufacturing leads can sign lot returns")
 
     lot = db.query(LotDB).filter_by(batch_id=batch_id).first()
@@ -148,4 +166,5 @@ def sign_return_from_hold(batch_id: int, username: str, password: str, db: Sessi
 
     db.commit()
     db.refresh(lot)
+    logger.info(f"Lot {lot.lot_id} (batch_id={batch_id}) hold-return signed by {username} ({user.role}) — new status: {lot.status}")
     return _to_response(lot, db)
