@@ -32,7 +32,16 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    """Authenticate a user and return a JWT access token."""
+    """
+    Authenticate with username and password, receive a JWT access token.
+
+    Uses the standard OAuth2 password flow (`application/x-www-form-urlencoded`
+    body with `username` and `password` fields — this is why Swagger's
+    "Try it out" shows a form here instead of a JSON body). The
+    returned `access_token` must be sent as `Authorization: Bearer <token>`
+    on protected endpoints. Inactive users are rejected with 403 even
+    with correct credentials.
+    """
     user = db.query(UserDB).filter_by(username=form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         logger.warning(f"Failed login attempt for username '{form_data.username}'")
@@ -54,5 +63,11 @@ def login(
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: UserDB = Depends(get_current_user)):
-    """Return the currently authenticated user's profile."""
+    """
+    Return the profile of the currently authenticated user.
+
+    Reads the bearer token from the `Authorization` header and
+    resolves it back to the user record. Used by the frontend right
+    after login to know which role's UI to render.
+    """
     return current_user

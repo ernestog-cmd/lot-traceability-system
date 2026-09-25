@@ -13,7 +13,12 @@ def get_users(
     db: Session = Depends(get_db),
     _=Depends(require_role("admin"))
 ):
-    """List all users. Admin only."""
+    """
+    List all users in the system.
+
+    **Admin only.** Returns every user regardless of active status,
+    including their current role.
+    """
     return user_service.get_all_users(db)
 
 
@@ -23,7 +28,13 @@ def create_user(
     db: Session = Depends(get_db),
     _=Depends(require_role("admin"))
 ):
-    """Create a new user. Admin only."""
+    """
+    Create a new user account.
+
+    **Admin only.** The `role` must be one of: `admin`, `engineer`,
+    `manufacturing`, `auditor`. New users are active by default.
+    Fails with 409 if the username is already taken.
+    """
     return user_service.create_user(data, db)
 
 
@@ -33,7 +44,12 @@ def toggle_active(
     db: Session = Depends(get_db),
     _=Depends(require_role("admin"))
 ):
-    """Activate or deactivate a user. Admin only."""
+    """
+    Activate or deactivate a user account.
+
+    **Admin only.** Flips the user's active status. Inactive users
+    cannot log in, even with correct credentials.
+    """
     return user_service.toggle_active(username, db)
 
 
@@ -44,5 +60,10 @@ def update_role(
     db: Session = Depends(get_db),
     _=Depends(require_role("admin"))
 ):
-    """Change a user's role. Admin only."""
+    """
+    Change a user's role.
+
+    **Admin only.** Used when an employee changes position — e.g. a
+    Manufacturing lead promoted to Quality Engineer.
+    """
     return user_service.update_role(username, data.role, db)
